@@ -17,13 +17,16 @@ interface AppointmentSearchProps {
 
 const AppointmentSearch: React.FC<AppointmentSearchProps> = ({ appointments }) => {
   const [searchTerm, setSearchTerm] = useState('');
-  const [searchType, setSearchType] = useState<'email' | 'phone'>('email');
+  const [searchType, setSearchType] = useState<'email' | 'phone' | 'general'>('general');
 
   const filteredAppointments = appointments.filter(appointment => {
     const searchValue = searchTerm.toLowerCase();
     return searchType === 'email' 
       ? appointment.email.toLowerCase().includes(searchValue)
-      : appointment.phone.includes(searchValue);
+      : (searchType === 'phone' 
+      ? appointment.phone.includes(searchValue) : 
+      Object.values(appointment).some((value) => (
+        (typeof(value) === "string" ? value.toLowerCase().includes(searchValue) : false))));
   });
 
   return (
@@ -53,6 +56,7 @@ const AppointmentSearch: React.FC<AppointmentSearchProps> = ({ appointments }) =
             >
               <option value="email">Email</option>
               <option value="phone">Phone</option>
+              <option value="general">Any</option>
             </select>
           </div>
           
