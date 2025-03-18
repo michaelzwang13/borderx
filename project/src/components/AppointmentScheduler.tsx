@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 import AppointmentForm from './AppointmentForm';
 import AppointmentSearch from './AppointmentSearch';
@@ -15,12 +15,29 @@ const AppointmentScheduler = () => {
     notes: ''
   });
 
+  useEffect(() => {
+    fetchAppointments();
+  }, []);
+
   // Generate available time slots from 9 AM to 5 PM
   const timeSlots = Array.from({ length: 17 }, (_, i) => {
     const hour = Math.floor(i / 2) + 9;
     const minute = i % 2 === 0 ? '00' : '30';
     return `${hour.toString().padStart(2, '0')}:${minute}`;
   });
+
+  const fetchAppointments = async () => {
+    try {
+        const response = await fetch("http://localhost:5000/appointments", {
+            credentials: "include",
+        });
+        
+        const data = await response.json();
+        setAppointments(data);
+    } catch (error) {
+        console.error("Error fetching appointments:", error);
+    }
+  }
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -30,21 +47,30 @@ const AppointmentScheduler = () => {
     }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     
-    // Add new appointment
-    setAppointments(prev => [...prev, { ...formData, id: Date.now() }]);
-    
-    // Reset form
-    setFormData({
-      name: '',
-      email: '',
-      phone: '',
-      date: '',
-      time: '',
-      notes: ''
-    });
+    try {
+      const response = await fetch("http://localhost:5000/appointments", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(formData),
+      });
+
+      if (response.ok) {
+        fetchAppointments();
+        setFormData({
+          name: '',
+          email: '',
+          phone: '',
+          date: '',
+          time: '',
+          notes: ''
+        });
+      }
+    } catch (error) {
+      console.error("Error adding appointment:", error);
+    }
   };
 
   return (
